@@ -23,10 +23,13 @@ highestBids['silver'] = 500000
 highestBids['gold'] = 10000000
 highestBids['platinum'] = 20000000
 
-metBid = true                       //should you bid with metal?
-crysBid = false                     //should you bid with crystal?
-deutBid = false                     //should you bid with deuterium?
-bidHome = "P:3:387:4"               //from which planet should be bid?
+metBid = true                       // should you bid with metal?
+crysBid = false                     // should you bid with crystal?
+deutBid = false                     // should you bid with deuterium?
+bidHome = "P:3:387:4"               // from which planet should be bid?
+
+// Percentage of current resources to use as the maximum bid
+maxBidPercentage = 0.1               // 10%
 
 //######################################## SETTINGS END ########################################
 
@@ -43,12 +46,24 @@ func DetermineMaxBid(name) {
     for key, highestBid in highestBids {
         if strings.Contains(name, key) {
             LogDebug("Detected '" + name + "' as '" + key + "', highest bid: " + Dotify(highestBid))
-            return highestBid;
+            return highestBid
         }
     }
     
     LogWarn("Unable to map '" + name + "' to a bid value, skipping")
-    return 0;
+    return 0
+}
+
+func CalculateMaxBid() {
+    currentResources = GetCachedCelestial(bidHome).GetResources()
+    maxBidPercentage = 0.1 // Setzen Sie den Prozentsatz neu (falls er sich geändert hat)
+
+    maxBid = NewResources()
+    maxBid.Metal = int64(float64(currentResources.Metal) * maxBidPercentage)
+    maxBid.Crystal = int64(float64(currentResources.Crystal) * maxBidPercentage)
+    maxBid.Deuterium = int64(float64(currentResources.Deuterium) * maxBidPercentage)
+
+    LogDebug("Calculated max bid: " + Dotify(maxBid) + " (" + Dotify(maxBidPercentage * 100) + "% of current resources)")
 }
 
 func AucDo(ress) {
@@ -83,7 +98,7 @@ func refreshTime(TimeEnd) {
 
         default:
             LogError("Unknown TimeEnd value", TimeEnd)
-            return Random(5, 10)
+            return Random(15, 30)  // Erhöhen Sie die Wartezeit auf 15 bis 30 Sekunden
     }
 }
 
@@ -123,8 +138,10 @@ func processAuction() {
     
     highestBid = DetermineMaxBid(auc.CurrentItem)
     if highestBid <= 0 {
-        LogInfo("Skipping auction for '" + auc.CurrentItem + "'")
-        return auc.Endtime + 10
+        // Wenn kein fester Höchstgebot gefunden wird, berechne den maximalen Gebotsbetrag
+        CalculateMaxBid()
+        LogInfo("No fixed bid found for '" + auc.CurrentItem + "', using calculated max bid")
+        highestBid = maxBid.Total()
     }
     
     if auc.AlreadyBid == 0 {
