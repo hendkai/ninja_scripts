@@ -1,7 +1,7 @@
 /* Created by Bull, Notriv and LordMike
  * It is not perfect. However, a quick start for many
  */
- 
+
 /*
  * VERSION 1.10
  */
@@ -12,7 +12,6 @@
  */
 
 /*---------------------------------------------------------------------------------------------------------------------------*/
-
 
 //######################################## SETTINGS START ########################################
 
@@ -27,7 +26,7 @@ highestBids['platinum'] = 20000000
 metBid = true                       //should you bid with metal?
 crysBid = false                     //should you bid with crystal?
 deutBid = false                     //should you bid with deuterium?
-bidHome = "P:1:234:5"               //from which planet should be bid?
+bidHome = "P:3:387:4"               //from which planet should be bid?
 
 //######################################## SETTINGS END ########################################
 
@@ -109,6 +108,9 @@ func processAuction() {
         return Random(5, 10)
     }
     
+    // Log-Ausgabe für Debugging der Auktionsdaten
+    LogDebug("Auction data: " + auc)
+
     if auc.HasFinished {
         if auc.Endtime > 7200 {
             LogInfo("There is currently no auction")
